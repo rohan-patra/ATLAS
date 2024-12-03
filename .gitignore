@@ -1,0 +1,80 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/marketplace/node_modules
+/marketplace/.pnp
+marketplace/.pnp.js
+
+# testing
+/marketplace/coverage
+
+# database
+/prisma/db.sqlite
+/prisma/db.sqlite-journal
+db.sqlite
+
+# next.js
+/marketplace/.next/
+/marketplace/out/
+marketplace/next-env.d.ts
+
+# production
+/marketplace/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local env files
+# do not commit any .env files to git, except for the .env.example file. https://create.t3.gg/en/usage/env-variables#using-environment-variables
+marketplace/.env
+marketplace/.env*.local
+
+# vercel
+marketplace/.vercel
+
+# typescript
+marketplace/*.tsbuildinfo
+
+# idea files
+.idea
+
+# environment variables
+.env
+
+swarm/node_modules/
+swarm/.env
+swarm/.env*.local
+swarm/__pycache__/
+swarm/*.py[cod]
+swarm/*.pyo
+swarm/venv/
+swarm/env/
+swarm/*.egg-info/
+swarm/*.log
+swarm/swarm-logs/
+swarm/swarm_output/
+swarm/results/
+swarm/temp/
+swarm/models/
+swarm/agents/
+swarm/*.pt
+swarm/*.onnx
+swarm/datasets/
+swarm/*.csv
+swarm/*.parquet
+
+# Secrets
+swarm/openai_key.json
+swarm/auth/
+swarm/credentials.json
+
+# Docker
+swarm/*.dockerfile
+swarm/docker-compose.override.yml
