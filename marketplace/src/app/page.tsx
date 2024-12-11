@@ -1,35 +1,64 @@
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import Image from "next/image";
 import Link from "next/link";
+import type { Listing } from "@/types/listing";
+import { formatDistanceToNow } from "date-fns";
 
-export default function HomePage() {
+async function getListings() {
+  const res = await fetch("http://localhost:3000/api/listings", {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Failed to fetch listings");
+  return res.json() as Promise<Listing[]>;
+}
+
+export default async function HomePage() {
+  const listings = await getListings();
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-      <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-        <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-[5rem]">
-          Create <span className="text-[hsl(280,100%,70%)]">T3</span> App
-        </h1>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-          <Link
-            className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 text-white hover:bg-white/20"
-            href="https://create.t3.gg/en/usage/first-steps"
-            target="_blank"
-          >
-            <h3 className="text-2xl font-bold">First Steps →</h3>
-            <div className="text-lg">
-              Just the basics - Everything you need to know to set up your
-              database and authentication.
-            </div>
-          </Link>
-          <Link
-            className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 text-white hover:bg-white/20"
-            href="https://create.t3.gg/en/introduction"
-            target="_blank"
-          >
-            <h3 className="text-2xl font-bold">Documentation →</h3>
-            <div className="text-lg">
-              Learn more about Create T3 App, the libraries it uses, and how to
-              deploy it.
-            </div>
-          </Link>
+    <main className="min-h-screen bg-gray-100 p-8">
+      <div className="mx-auto max-w-7xl">
+        <h1 className="mb-8 text-4xl font-bold">Marketplace</h1>
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {listings.map((listing) => (
+            <Link key={listing.id} href={`/listing/${listing.id}`}>
+              <Card className="h-full overflow-hidden transition-shadow hover:shadow-lg">
+                <CardHeader className="p-0">
+                  <div className="relative h-48 w-full">
+                    <Image
+                      src={listing.imageUrl}
+                      alt={listing.title}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <CardTitle className="mb-2">{listing.title}</CardTitle>
+                  <label className="text-sm text-gray-500">Ask</label>
+                  <p className="text-2xl font-bold text-green-600">
+                    ${listing.price.toFixed(2)}
+                  </p>
+                  <p className="mt-2 text-sm text-gray-600">
+                    {listing.location}
+                  </p>
+                </CardContent>
+                <CardFooter className="p-4 pt-0 text-sm text-gray-500">
+                  Listed{" "}
+                  {formatDistanceToNow(new Date(listing.datePosted), {
+                    addSuffix: true,
+                  })}
+                </CardFooter>
+              </Card>
+            </Link>
+          ))}
         </div>
       </div>
     </main>
