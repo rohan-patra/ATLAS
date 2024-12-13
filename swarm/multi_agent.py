@@ -11,13 +11,8 @@ def product_verification_agent():
     """Agent responsible for verifying product details and authenticity"""
     return Agent(
         name="Product Verification Agent",
-        system_prompt="""You are a product verification agent. Your role is to:
-        1. Verify product details (name, description, condition)
-        2. Check if the product meets marketplace standards
-        3. Validate product authenticity
-        4. Request additional information if needed
-        
-        Respond with clear verification status and any concerns.""",
+        system_prompt="""Verify this product's details, authenticity, and marketplace standards. 
+        Report any concerns or issues immediately.""",
         tools=[] 
     )
 
@@ -25,13 +20,7 @@ def initial_negotiation_agent():
     """Agent handling the initial phase of negotiation"""
     return Agent(
         name="Initial Negotiation Agent",
-        system_prompt="""You are an initial negotiation agent. Your role is to:
-        1. Establish initial contact between buyer and seller
-        2. Gather basic requirements and preferences
-        3. Confirm listing price and buyer's interest
-        4. Set the stage for price negotiation
-        
-        Keep the conversation professional and focused on moving to price discussion.""",
+        system_prompt="""Establish contact, confirm price and interest, and prepare for negotiation.""",
         tools=[]
     )
 
@@ -39,14 +28,8 @@ def price_negotiation_agent():
     """Agent managing the price negotiation process"""
     return Agent(
         name="Price Negotiation Agent",
-        system_prompt="""You are a price negotiation agent. Your role is to:
-        1. Facilitate price negotiations between buyer and seller
-        2. Evaluate offers and counteroffers
-        3. Consider market conditions and item value
-        4. Work towards a mutually acceptable price
-        5. Know when to transfer to transaction closure or abort
-        
-        Maintain fairness and professionalism throughout the negotiation.""",
+        system_prompt="""Facilitate price negotiations professionally. Make or evaluate offers based on 
+        market value and budget constraints.""",
         tools=[]
     )
 
@@ -54,14 +37,7 @@ def shipping_details_agent():
     """Agent handling shipping logistics"""
     return Agent(
         name="Shipping Details Agent",
-        system_prompt="""You are a shipping details agent. Your role is to:
-        1. Collect shipping information from buyer
-        2. Calculate shipping costs
-        3. Explain shipping options and timeframes
-        4. Handle special shipping requirements
-        5. Verify addresses and delivery preferences
-        
-        Ensure all shipping details are clear and accurate.""",
+        system_prompt="""Handle shipping logistics, costs, and delivery preferences efficiently.""",
         tools=[]
     )
 
@@ -69,14 +45,7 @@ def transaction_closure_agent():
     """Agent managing the final transaction process"""
     return Agent(
         name="Transaction Closure Agent",
-        system_prompt="""You are a transaction closure agent. Your role is to:
-        1. Summarize the agreed terms
-        2. Confirm final price including shipping
-        3. Guide through payment process
-        4. Provide transaction documentation
-        5. Ensure both parties understand next steps
-        
-        Make sure all aspects of the deal are clear and documented.""",
+        system_prompt="""Finalize the transaction with clear terms, payment process, and next steps.""",
         tools=[]
     )
 
@@ -84,14 +53,7 @@ def negotiation_abort_agent():
     """Agent handling negotiation termination"""
     return Agent(
         name="Negotiation Abort Agent",
-        system_prompt="""You are a negotiation abort agent. Your role is to:
-        1. Handle graceful termination of negotiations
-        2. Document reason for termination
-        3. Provide alternative suggestions if applicable
-        4. Maintain professional relationship for future interactions
-        5. Collect feedback for system improvement
-        
-        Keep the interaction professional even when dealing with unsuccessful negotiations.""",
+        system_prompt="""Handle negotiation termination professionally and document the reason.""",
         tools=[]
     )
 
@@ -120,9 +82,6 @@ def marketplace_negotiation(product_details, buyer_budget, seller_min_price, use
 
     def get_user_instruction(stage):
         if interactive:
-            print(f"\n[Optional] As the {user_role}, enter your instructions for {stage}")
-            print(f"These instructions will guide your {user_role} agent's behavior.")
-            print("Press Enter to skip, or type your instructions:")
             return input(f"{user_role.title()}'s Instructions > ").strip()
         return ""
 
@@ -130,19 +89,17 @@ def marketplace_negotiation(product_details, buyer_budget, seller_min_price, use
     abort = negotiation_abort_agent()
 
     # Step 1: Product Verification
-    print(f"\n--- Step 1: Product Verification ---")
+    print("\n--- Step 1: Product Verification ---")
     user_instruction = get_user_instruction("Product Verification")
     base_context = f"\n{user_role.title()}'s Instructions: {user_instruction}" if user_instruction else ""
     
     verifier = Agent(
         name=f"Product Verification Agent ({user_role.title()}'s Agent)",
-        system_prompt=f"""You are a product verification agent working for the {user_role}. Your role is to:
-        1. Verify product details (name, description, condition)
-        2. Check if the product meets marketplace standards
-        3. Validate product authenticity
-        4. Request additional information if needed
-        
-        Respond with clear verification status and any concerns.{base_context}""",
+        system_prompt=f"""You are a product verification agent working for the {user_role}. 
+        Verify product details, authenticity, and marketplace standards. 
+        Provide a direct and concise response about the product's verification status.
+        Do not list instructions or recommendations.
+        Simply state your findings and any concerns.{base_context}""",
         tools=[]
     )
 
@@ -150,10 +107,10 @@ def marketplace_negotiation(product_details, buyer_budget, seller_min_price, use
         agent=verifier,
         messages=[{
             "role": "user",
-            "content": f"Please verify the following product: {product_details}"
+            "content": f"Verify this product and provide a direct response: {product_details}"
         }]
     )
-    print("Verification Response:", verification_result.messages[-1]["content"])
+    print(f"\n🔍 Verification Agent: {verification_result.messages[-1]['content']}")
     
     if "concerns" in verification_result.messages[-1]["content"].lower():
         print("\n❌ Product verification failed. Aborting...")
@@ -193,7 +150,7 @@ def marketplace_negotiation(product_details, buyer_budget, seller_min_price, use
             """
         }]
     )
-    print("Initial Negotiation Response:", initial_result.messages[-1]["content"])
+    print(f"\n🤝 Initial Negotiation Agent: {initial_result.messages[-1]['content']}")
 
     if "not interested" in initial_result.messages[-1]["content"].lower():
         print("\n❌ Buyer not interested. Aborting...")
@@ -215,54 +172,96 @@ def marketplace_negotiation(product_details, buyer_budget, seller_min_price, use
         user_instruction = get_user_instruction(f"Price Negotiation Round {round_num + 1}")
         base_context = f"\n{user_role.title()}'s Instructions: {user_instruction}" if user_instruction else ""
         
-        price_neg = Agent(
-            name="Price Negotiation Agent",
-            system_prompt=f"""You are a price negotiation agent. Your role is to:
-            1. Facilitate price negotiations between buyer and seller
-            2. Evaluate offers and counteroffers
-            3. Consider market conditions and item value
-            4. Work towards a mutually acceptable price
-            5. Know when to transfer to transaction closure or abort
-            
-            Maintain fairness and professionalism throughout the negotiation.{base_context}""",
+        # Buyer's turn
+        buyer_agent = Agent(
+            name="Buyer Agent",
+            system_prompt=f"""You are a buyer agent. Make direct offers and responses.
+            Do not explain the negotiation process or give instructions.
+            Maximum budget: ${buyer_budget}
+            Current round: {round_num + 1}
+            Previous offer: ${current_offer if current_offer else 'None'}
+            {base_context if user_role == 'buyer' else ''}""",
             tools=[]
         )
 
-        price_result = client.run(
-            agent=price_neg,
+        buyer_result = client.run(
+            agent=buyer_agent,
             messages=[{
                 "role": "user",
                 "content": f"""
                 Round {round_num + 1}
-                Current offer: ${current_offer if current_offer else 'None'}
-                Listing price: ${product_details.get('price')}
-                Buyer budget: ${buyer_budget}
-                Seller minimum: ${seller_min_price}
+                Listed price: ${product_details.get('price')}
+                Previous offer: ${current_offer if current_offer else 'None'}
+                Make an offer and explain your reasoning.
                 """
             }]
         )
         
-        response = price_result.messages[-1]["content"]
-        print("Negotiation Response:", response)
+        buyer_message = buyer_result.messages[-1]["content"]
+        print(f"\n👤 Buyer: {buyer_message}")
         
-        if "agreement reached" in response.lower():
+        # Extract buyer's offer
+        current_offer = extract_offer(buyer_message)
+        if not current_offer:
+            print("❌ Error: Could not extract valid offer from buyer's message")
+            continue
+
+        # Seller's turn
+        seller_agent = Agent(
+            name="Seller Agent",
+            system_prompt=f"""You are a seller agent. Your role is to:
+            1. Evaluate offers considering minimum price of ${seller_min_price}
+            2. Respond professionally with acceptance, rejection, or counter-offers
+            3. Explain your reasoning clearly
+            4. Work towards a fair deal
+            
+            Current round: {round_num + 1}
+            Current offer: ${current_offer}
+            Your minimum acceptable price: ${seller_min_price}
+            {base_context if user_role == 'seller' else ''}""",
+            tools=[]
+        )
+
+        seller_result = client.run(
+            agent=seller_agent,
+            messages=[{
+                "role": "user",
+                "content": f"""
+                Round {round_num + 1}
+                Buyer's offer: ${current_offer}
+                Listed price: ${product_details.get('price')}
+                Respond to this offer and explain your reasoning.
+                """
+            }]
+        )
+        
+        seller_message = seller_result.messages[-1]["content"]
+        print(f"\n🏪 Seller: {seller_message}")
+
+        # Check for agreement or termination
+        if "accept" in seller_message.lower():
             print("\n✅ Agreement reached!")
             break
-        elif "terminate" in response.lower():
-            print("\n❌ Price negotiation failed. Aborting...")
+        elif "terminate" in seller_message.lower() or round_num == max_rounds - 1:
+            print("\n❌ Negotiation failed.")
             return client.run(
                 agent=abort,
                 messages=[{
                     "role": "user",
-                    "content": "Price negotiation failed. Terminate the negotiation."
+                    "content": "Negotiation failed. Terminate the negotiation."
                 }]
             )
-        
-        current_offer = extract_offer(response)
-        print(f"Extracted offer: ${current_offer}")
+
+        # Extract counter-offer if present
+        counter_offer = extract_offer(seller_message)
+        if counter_offer:
+            current_offer = counter_offer
+            print(f"💰 New offer on the table: ${current_offer}")
+
+        print("\n" + "-"*50)  # Separator between rounds
 
     # Step 4: Shipping Details
-    if "agreement reached" in response.lower():
+    if "agreement reached" in seller_message.lower():
         print("\n--- Step 4: Shipping Details ---")
         user_instruction = get_user_instruction("Shipping Details")
         base_context = f"\n{user_role.title()}'s Instructions: {user_instruction}" if user_instruction else ""
@@ -353,17 +352,10 @@ if __name__ == "__main__":
         "category": "Furniture"
     }
     
-    # Let user choose their role
-    print("\nChoose your role in the marketplace:")
-    print("1. Buyer")
+    print("\n1. Buyer")
     print("2. Seller")
-    role_choice = input("Enter 1 or 2: ").strip()
+    role_choice = input("> ").strip()
     user_role = 'buyer' if role_choice == '1' else 'seller'
-    
-    print(f"\nYou are the {user_role.upper()} in this marketplace negotiation.")
-    print(f"You will be prompted to give instructions to your {user_role} agent at each stage.")
-    print(f"Your agent will negotiate on your behalf based on your instructions.")
-    print("(Press Enter to skip giving instructions for any stage)")
     
     result = marketplace_negotiation(
         product_details=product_details,
