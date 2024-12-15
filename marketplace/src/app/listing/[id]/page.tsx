@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
 import type { Listing } from "@/types/listing";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 
 async function getListing(id: string) {
@@ -94,7 +94,7 @@ export default async function ListingPage({
                   );
                   const data = await res.json();
                   if (data.conversationId) {
-                    window.location.href = `/conversation/${data.conversationId}`;
+                    redirect(`/conversation/${data.conversationId}`);
                   }
                 }}
               >
