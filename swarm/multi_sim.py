@@ -123,8 +123,7 @@ def simulate_negotiation():
     else:
         print("\nNegotiation ended without a deal.")
 
-if __name__ == "__main__":
-    print(f"Starting negotiation for {ITEM['name']}")
-    print(f"Listed price: ${ITEM['listing_price']}")
-    print("-" * 50)
-    simulate_negotiation()
+print(f"Starting negotiation for {ITEM['name']}")
+print(f"Listed price: ${ITEM['listing_price']}")
+print("-" * 50)
+simulate_negotiation()
