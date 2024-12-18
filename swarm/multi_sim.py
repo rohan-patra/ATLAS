@@ -3,12 +3,14 @@ from swarm import Agent, Swarm
 import time
 import os
 from dotenv import load_dotenv
+import re
 
 load_dotenv()
 api_key = os.getenv('OPENAI_API_KEY')
 
 client = OpenAI()
 
+# sample item, change whenever
 ITEM = {
     "name": "Vintage Mechanical Keyboard",
     "condition": "Used - Like New",
@@ -20,76 +22,99 @@ ITEM = {
 
 def create_system_prompt(role):
     if role == "seller":
-        return """You are a marketplace seller. You are selling a specific item and must engage with the buyer.
-                 Be professional but firm on pricing. You can accept offers but try to maximize your profit.
-                 Respond in a natural conversational way. Only state the price when making or responding to offers."""
+        return """You are a marketplace seller on a casual messaging platform. Use a conversational, text-message style (casual but professional).
+                 You're selling a specific item and must engage with the buyer. Be firm on pricing but willing to negotiate.
+                 Keep responses brief and natural. Only mention price when making/responding to offers."""
     else:
-        return """You are a marketplace buyer. You're interested in the item but want the best possible price.
-                 First verify the item's condition and authenticity, then negotiate firmly but reasonably.
-                 Use various negotiation tactics but remain professional. Respond conversationally."""
+        return """You are a marketplace buyer on a casual messaging platform. Use a conversational, text-message style.
+                 You're interested in the item but want the best possible price. First check the item's condition,
+                 then negotiate firmly but reasonably. Keep responses brief and natural, like texting."""
+
+def extract_price(message):
+    """Extract price from a message using regex to find dollar amounts."""
+    price_matches = re.findall(r'\$(\d+)', message)
+    if price_matches:
+        return int(price_matches[-1])
+    return None
 
 def simulate_negotiation():
-    messages = []
+
+    seller_system = create_system_prompt("seller") + "\nYou are responding as the SELLER. The other person is the BUYER."
+    buyer_system = create_system_prompt("buyer") + "\nYou are responding as the BUYER. The other person is the SELLER."
     
-    # listing
-    seller_system = create_system_prompt("seller")
-    buyer_system = create_system_prompt("buyer")
+    # Create initial buyer message
+    buyer_first_message = f"Hi! I saw your {ITEM['name']} listed for ${ITEM['listing_price']}. Could you tell me more about its condition?"
     
-    buyer_first_message = f"Hi, I'm interested in your {ITEM['name']} listed for ${ITEM['listing_price']}. Can you tell me more about its condition and authenticity?"
+
+    conversation_history = []
     
-    messages.append({"role": "system", "content": seller_system})
-    messages.append({"role": "user", "content": buyer_first_message})
+
+    conversation_history.append({
+        "role": "user",
+        "content": f"[BUYER]: {buyer_first_message}"
+    })
     
     round_count = 0
     deal_made = False
     final_price = None
     
     while round_count < 5 and not deal_made:
-
+        print(f"\n--- Round {round_count + 1} ---")
+        
+        # Seller's turn
+        seller_messages = [
+            {"role": "system", "content": seller_system},
+            *conversation_history
+        ]
+        
         seller_response = client.chat.completions.create(
             model="gpt-4",
-            messages=[
-                {"role": "system", "content": seller_system},
-                *messages
-            ],
-            temperature=0.7
+            messages=seller_messages,
+            temperature=0.7,
+            max_tokens=150 
         )
         seller_message = seller_response.choices[0].message.content
-        messages.append({"role": "assistant", "content": seller_message})
-        print(f"\nSeller: {seller_message}")
+        conversation_history.append({
+            "role": "assistant",
+            "content": f"[SELLER]: {seller_message}"
+        })
+        print(f"💬 Seller: {seller_message}")
         
 
         if "deal" in seller_message.lower() or "sold" in seller_message.lower():
             deal_made = True
-
-            try:
-                final_price = int(''.join(filter(str.isdigit, seller_message)))
-            except:
+            final_price = extract_price(seller_message)
+            if not final_price:
                 final_price = ITEM['listing_price']
             break
             
         # Buyer's turn
+        buyer_messages = [
+            {"role": "system", "content": buyer_system},
+            *conversation_history
+        ]
+        
         buyer_response = client.chat.completions.create(
             model="gpt-4",
-            messages=[
-                {"role": "system", "content": buyer_system},
-                *messages
-            ],
-            temperature=0.7
+            messages=buyer_messages,
+            temperature=0.7,
+            max_tokens=150 
         )
         buyer_message = buyer_response.choices[0].message.content
-        messages.append({"role": "user", "content": buyer_message})
-        print(f"\nBuyer: {buyer_message}")
+        conversation_history.append({
+            "role": "user",
+            "content": f"[BUYER]: {buyer_message}"
+        })
+        print(f"🛍️ Buyer: {buyer_message}")
         
         # Check if deal is made
         if "deal" in buyer_message.lower() or "sold" in buyer_message.lower():
             deal_made = True
-            try:
-                final_price = int(''.join(filter(str.isdigit, buyer_message)))
-            except:
+            final_price = extract_price(buyer_message)
+            if not final_price: 
                 final_price = ITEM['listing_price']
             break
-            
+        
         round_count += 1
         time.sleep(1)
     
