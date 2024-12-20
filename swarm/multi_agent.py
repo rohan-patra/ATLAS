@@ -10,9 +10,7 @@ api_key = os.getenv("OPENAI_API_KEY")
 
 client = Swarm()
 
-# current issues:
-# the agents are not properly responding to changes when prompting ie if you want to negotiate a higher price for an item as a buyer or vice versa as a seller it does not work
-# dialogue is cluttered with recommendations of actions, the dialogue should be clear
+# Previous implementation with swarm
 
 
 def product_verification_agent():

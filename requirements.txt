@@ -1,2 +1,5 @@
 python-dotenv
 git+https://github.com/openai/swarm.git
+openai==1.58.1
+python-dotenv==1.0.1
+swarm==0.1.0
