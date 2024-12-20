@@ -101,6 +101,39 @@ def log_message(conversation_id, message):
         )
 
 
+def verify_product(item, user_role, user_instruction=""):
+    """Verify product details and authenticity"""
+    verifier = Agent(
+        name="Product Verification Agent",
+        system_prompt=f"""You are verifying this product for the {user_role}.
+        Your ONLY task is to verify if this product meets marketplace standards.
+        
+        Format your response EXACTLY like this:
+        VERIFICATION: [YES/NO]
+        REASON: [One brief sentence explaining why]
+        
+        Do not provide recommendations, steps, or checklists.
+        If no specific concerns are provided, assume the product meets standards.""",
+        tools=[],
+    )
+
+    verification_result = client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": verifier.system_prompt},
+            {
+                "role": "user",
+                "content": f"Verify this product: {item}"
+                + (f"\nUser concerns: {user_instruction}" if user_instruction else ""),
+            },
+        ],
+        temperature=0.7,
+        max_tokens=150,
+    )
+
+    return verification_result.choices[0].message.content
+
+
 def simulate_negotiation():
     # Create new conversation at start
     conversation_id = str(uuid.uuid4())
@@ -109,6 +142,29 @@ def simulate_negotiation():
 
     user_role = get_user_role()
     print(f"\nYou are the {user_role}. Let's start the negotiation!")
+
+    # Step 1: Product Verification
+    print("\n--- Step 1: Product Verification ---")
+    print("Enter any concerns about the product (press Enter to skip):")
+    user_instruction = input("> ").strip()
+
+    verification_result = verify_product(ITEM, user_role, user_instruction)
+    print(f"\n🔍 Verification Result: {verification_result}")
+
+    if "no" in verification_result.lower():
+        print("\n❌ Verification failed - product did not meet marketplace standards")
+        return
+
+    # Log initial greeting messages
+    now = datetime.utcnow().isoformat() + "Z"
+    log_message(
+        conversation_id, {"dateTime": now, "content": "Hello", "sender": "buyer"}
+    )
+    log_message(
+        conversation_id, {"dateTime": now, "content": "Hello", "sender": "seller"}
+    )
+
+    print("\n--- Starting Price Negotiation ---")
 
     seller_system = (
         create_system_prompt("seller")
@@ -123,15 +179,6 @@ def simulate_negotiation():
     round_count = 0
     deal_made = False
     final_price = None
-
-    # Log initial greeting messages
-    now = datetime.utcnow().isoformat() + "Z"
-    log_message(
-        conversation_id, {"dateTime": now, "content": "Hello", "sender": "buyer"}
-    )
-    log_message(
-        conversation_id, {"dateTime": now, "content": "Hello", "sender": "seller"}
-    )
 
     # Handle initial buyer message
     if user_role == "buyer":
