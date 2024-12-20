@@ -70,7 +70,9 @@ def get_user_message(role, round_num, conversation_history):
         response = client.chat.completions.create(
             model="gpt-4", messages=messages, temperature=0.7, max_tokens=150
         )
-        return response.choices[0].message.content
+        ai_message = response.choices[0].message.content
+        print(f"\n Agent ({role}): {ai_message}")
+        return ai_message
 
     return user_input
 
@@ -220,6 +222,12 @@ def simulate_negotiation():
                 model="gpt-4", messages=seller_messages, temperature=0.7, max_tokens=150
             )
             seller_message = seller_response.choices[0].message.content
+            print(f"💼 Seller: {seller_message}")  # Add seller emoji
+
+        conversation_history.append({
+            "role": "assistant" if user_role == "buyer" else "user",
+            "content": seller_message
+        })
 
         # Log seller's message
         now = datetime.utcnow().isoformat() + "Z"
@@ -248,7 +256,7 @@ def simulate_negotiation():
                 final_price = ITEM["listing_price"]
             break
 
-        # Buyer's turn
+
         if user_role == "buyer":
             buyer_message = get_user_message(
                 "buyer", round_count + 1, conversation_history
@@ -262,6 +270,12 @@ def simulate_negotiation():
                 model="gpt-4", messages=buyer_messages, temperature=0.7, max_tokens=150
             )
             buyer_message = buyer_response.choices[0].message.content
+            print(f"🛍️ Buyer: {buyer_message}") 
+
+        conversation_history.append({
+            "role": "user" if user_role == "buyer" else "assistant",
+            "content": buyer_message
+        })
 
         # Log buyer's message
         now = datetime.utcnow().isoformat() + "Z"
