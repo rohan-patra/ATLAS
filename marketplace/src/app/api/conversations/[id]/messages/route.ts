@@ -7,7 +7,8 @@ export async function GET(
   { params }: { params: { id: string } },
 ) {
   try {
-    const messages = await getConversation(params.id);
+    const { id: conversationId } = await params;
+    const messages = await getConversation(conversationId);
     return NextResponse.json(messages);
   } catch (error) {
     console.error("Error fetching messages:", error);
@@ -23,13 +24,14 @@ export async function POST(
   { params }: { params: { id: string } },
 ) {
   try {
-    const message = await request.json() as Omit<Message, "dateTime">;
+    const { id: conversationId } = await params;
+    const message = (await request.json()) as Omit<Message, "dateTime">;
     const fullMessage: Message = {
       ...message,
       dateTime: new Date(),
     };
 
-    await addMessage(params.id, fullMessage);
+    await addMessage(conversationId, fullMessage);
     return NextResponse.json(fullMessage, { status: 201 });
   } catch (error) {
     console.error("Error sending message:", error);
@@ -38,4 +40,4 @@ export async function POST(
       { status: 500 },
     );
   }
-} 
+}

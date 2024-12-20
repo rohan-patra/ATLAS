@@ -49,7 +49,8 @@ export default async function ConversationPage({
 }: {
   params: { id: string };
 }) {
-  const messages = await getMessages(params.id);
+  const { id: conversationId } = await params;
+  const messages = await getMessages(conversationId);
 
   return (
     <main className="min-h-screen bg-gray-100 p-8">

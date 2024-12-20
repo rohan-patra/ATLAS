@@ -6,7 +6,8 @@ export async function GET(
   { params }: { params: { id: string } },
 ) {
   try {
-    const listing = await getListing(params.id);
+    const { id: listingId } = await params;
+    const listing = await getListing(listingId);
     if (!listing) {
       return NextResponse.json({ error: "Listing not found" }, { status: 404 });
     }
