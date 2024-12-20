@@ -105,7 +105,7 @@ def verify_product(item, user_role, user_instruction=""):
     """Verify product details and authenticity"""
     verifier = Agent(
         name="Product Verification Agent",
-        system_prompt=f"""You are verifying this product for the {user_role}.
+        instructions=f"""You are verifying this product for the {user_role}.
         Your ONLY task is to verify if this product meets marketplace standards.
         
         Format your response EXACTLY like this:
@@ -120,7 +120,7 @@ def verify_product(item, user_role, user_instruction=""):
     verification_result = client.chat.completions.create(
         model="gpt-4",
         messages=[
-            {"role": "system", "content": verifier.system_prompt},
+            {"role": "system", "content": verifier.instructions},
             {
                 "role": "user",
                 "content": f"Verify this product: {item}"
