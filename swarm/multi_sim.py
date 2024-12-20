@@ -86,8 +86,20 @@ def simulate_negotiation():
     # Handle initial buyer message
     if user_role == 'buyer':
         buyer_message = get_user_message('buyer', 1, conversation_history)
+        print(f"🛍️ Buyer: {buyer_message}")
     else:
-        buyer_message = f"Hi! I saw your {ITEM['name']} listed for ${ITEM['listing_price']}. Could you tell me more about its condition?"
+        buyer_messages = [
+            {"role": "system", "content": buyer_system},
+            {"role": "user", "content": f"You're interested in a {ITEM['name']} listed for ${ITEM['listing_price']}. Start the conversation by asking about its condition."}
+        ]
+        buyer_response = client.chat.completions.create(
+            model="gpt-4",
+            messages=buyer_messages,
+            temperature=0.7,
+            max_tokens=150
+        )
+        buyer_message = buyer_response.choices[0].message.content
+        print(f"🛍️ Buyer: {buyer_message}")
     
     conversation_history.append({
         "role": "user",
